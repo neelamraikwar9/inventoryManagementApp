@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A6.3_HW4</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+  </head>
+  <body>
+    <header class="bg-white">
+      <nav class="navbar navbar-expand-lg">
+        <div class="container">
+          <a href="index.html" class="navbar-brand">Inventory Management</a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+              <li class="nav-item">
+                <a href="index.html" class="nav-link">Home</a>
+              </li>
+              <li class="nav-item">
+                <a href="itemList.html" class="nav-link">Item List</a>
+              </li>
+              <li class="nav-item">
+                <a href="addItems.html" class="nav-link">Add Items</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </header>
+    <main class="container py-3">
+      <h1>Item List</h1>
+      <label for="categoryFilter">Filter by Category:</label>
+      <br />
+      <br />
+      <select id="categoryFilter" class="form-control">
+        <option value="All">All</option>
+        <option value="Perishable">Perishable</option>
+        <option value="Non-Perishable">Non-Perishable</option>
+      </select>
+      <div id="textMessage"></div>
+      <ul id="unorderedList"></ul>
+    </main>
+
+    <script>
+      const categoryFilter = document.querySelector("#categoryFilter");
+      const unorderedList = document.querySelector("#unorderedList");
+      const textMessage = document.querySelector("#textMessage");
+
+      const apiUrl =
+        "https://inventory-management-student-neog-ca.replit.app/inventory";
+
+      function fetchData() {
+        unorderedList.textContent = "Loading...";
+
+        fetch(apiUrl)
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            if (data) {
+              // console.log(data);
+              textMessage.textContent = " ";
+              unorderedList.textContent = " ";
+              updateItemList(data);
+            }
+          })
+          .catch(function (error) {
+            unorderedList.textContent = "An error occured while fetching data.";
+          });
+      }
+      fetchData();
+
+      function updateItemList(data) {
+        if (data) {
+          // console.log(data);
+          unorderedList.textContent = " ";
+
+          for (let i = 0; i < data.length; i++) {
+            const li = document.createElement("li");
+            li.className = "col-md-12 my-4";
+            li.innerHTML = `${data[i].itemName} - Quantity: ${data[i].quantity} - Category: ${data[i].category} <button class="btn btn-danger float-end" data-id="${data[i]._id}" id="deleteButton">Delete</button>`;
+            unorderedList.appendChild(li);
+            // console.log(unorderedList);
+          }
+        } else {
+          textMessage.textContent = "No items found in this category.";
+        }
+
+        const deleteButton = document.querySelectorAll("#deleteButton");
+        for (let i = 0; i < deleteButton.length; i++) {
+          deleteButton[i].addEventListener("click", function (event) {
+            const itemId = event.target.getAttribute("data-id");
+            // console.log(itemId);
+
+            const apiDeleteUrl = `https://inventory-management-student-neog-ca.replit.app/inventory/${itemId}`;
+
+            fetch(apiDeleteUrl, {
+              method: "DELETE",
+            })
+              .then(function (response) {
+                return response.json();
+              })
+              .then(function (data) {
+                if (data) {
+                  textMessage.textContent = "Items deleted successfully.";
+
+                  fetchData();
+                }
+              })
+              .catch(function (error) {
+                textMessage.textContent =
+                  "An error occured while deleting Items.";
+              });
+          });
+        }
+      }
+
+      categoryFilter.addEventListener("change", applyCategoryFilter);
+
+      function applyCategoryFilter() {
+        const userCategory = categoryFilter.value;
+
+        const selectedCategory = [];
+
+        fetch(apiUrl)
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            if (data) {
+              // console.log(data);
+              if (userCategory !== "All") {
+                for (let i = 0; i < data.length; i++) {
+                  // console.log("in for loop.");
+                  if (data[i].category === userCategory) {
+                    // console.log("inside if condition.");
+                    selectedCategory.push(data[i]);
+                  }
+                }
+                // console.log(selectedCategory);
+                updateItemList(selectedCategory);
+              } else {
+                updateItemList(data);
+              }
+            }
+          });
+      }
+    </script>
+  </body>
+</html>
